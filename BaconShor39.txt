@@ -1,0 +1,214 @@
+// Bacon-Shor 3x9 CCZ gate
+
+// Definitions
+// P0(q) -- preparing qubit q in |0>
+// Pp(q) -- preparing qubit q in |+>
+// Id(q) -- identity gate on qubit q
+// H(q)  -- Hadamard on qubit q
+// S(q)  -- Phase gate on qubit q
+// K(q)  -- S.H gate (H followed by S) on qubit q
+// Sinv(q) -- inverse S gate on qubit q
+// Kinv(q) -- inverse K gate on qubit q
+// CX(p,q) -- CNOT from qubit p to q
+// CZ(p,q) -- controlled-Z between qubits p and q
+// CCZ(p,q,r) -- controlled-controlled-Z between qubits p, q, and r
+// MeasZ(q) -- measures qubit q in the Z-basis
+// MeasX(q) -- measures qubit q in the X-basis
+// A(qi-qf) Ð single-qubit gate A applied transversally on qubits qi,qi+1,...,qf
+// B(pi-pf,qi-qf) Ð two-qubit gate B applied transversally from qubit pi to qi, from pi+1 to qi+1,...,from pf to qi 
+// C(pi-pf,qi-pf,ri-rf) Ð three-qubit gate C applied transversally between qubit pi, qi, and ri, between pi+1, qi+1, and ri+1,...,between pf, qf, and rf.
+
+// Circuits are broken into timesteps by newlines - a qubit should only be
+//  involved in at most 1 gate per timestep
+// Circuits are organized into subcircuits by "def". Subcircuits take sets of
+//  input and output qubits as arguments. Input qubits are never prepared
+//  within the subcircuit, and output qubits are never measured.
+
+
+// Fault-tolerantly prepares a logical |+> state in the 3x9 Bacon-Shor code
+def LogicalPlus(in=(), out=(1,2,...,27)):
+  
+  P0(5)
+  Pp(6)
+  P0(14)
+  Pp(15)
+  P0(23)
+  Pp(24)  
+
+  P0(4)
+  CX(6,5)
+  P0(7)  
+  P0(13)
+  CX(15,14)
+  P0(16)  
+  P0(22)
+  CX(24,23)
+  P0(25) 
+
+  P0(3)
+  CX(5,4)
+  CX(6,7)
+  P0(8)
+  P0(12)
+  CX(14,13)
+  CX(15,16)
+  P0(17)
+  P0(21)
+  CX(23,22)
+  CX(24,25)
+  P0(26)
+ 
+  P0(2)
+  CX(4,3)
+  Id(5)
+  Id(6)
+  CX(7,8)
+  P0(9)
+  P0(11)
+  CX(13,12)
+  Id(14)
+  Id(15)
+  CX(16,17)
+  P0(18)
+  P0(20)
+  CX(22,21)
+  Id(23)
+  Id(24)
+  CX(25,26)
+  P0(27)
+
+  P0(1)
+  CX(3,2)
+  Id(4)
+  Id(5)
+  Id(6)
+  Id(7)
+  CX(8,9)
+  P0(10)
+  CX(12,11)
+  Id(13)
+  Id(14)
+  Id(15)
+  Id(16)
+  CX(17,18)
+  P0(19)
+  CX(21,20)
+  Id(22)
+  Id(23)
+  Id(24)
+  Id(25)
+  CX(26,27)
+
+  CX(2,1)
+  Id(3)
+  Id(4)
+  Id(5)
+  Id(6)
+  Id(7)
+  Id(8)
+  CX(9,28)
+  CX(11,10)
+  Id(12)
+  Id(13)
+  Id(14)
+  Id(15)
+  Id(16)
+  Id(17)
+  CX(18,29)
+  CX(20,19)
+  Id(21)
+  Id(22)
+  Id(23)
+  Id(24)
+  Id(25)
+  Id(26)
+  CX(27,30)
+
+  CX(1,28)
+  Id(2)
+  Id(3)
+  Id(4)
+  Id(5)
+  Id(6)
+  Id(7)
+  Id(8)
+  Id(9)
+  CX(10,29)
+  Id(11)
+  Id(12)
+  Id(13)
+  Id(14)
+  Id(15)
+  Id(16)
+  Id(17)
+  Id(18)
+  CX(19,30)
+  Id(20)
+  Id(21)
+  Id(22)
+  Id(23)
+  Id(24)
+  Id(25)
+  Id(26)
+  Id(27)
+
+  Id(1-27)
+  MeasZ(28-30)
+
+
+// Fault-tolerantly prepares a logical |0> state in the 3x9 Bacon-Shor code
+def LogicalZero(in=(), out=(1,2,...,27)):
+  
+  Pp(1-9)
+  P0(10-18)
+  
+  Pp(19-27)
+  CX(1-9,10-18)
+
+  Id(1)
+  CX(10,19)
+  Id(2)
+  CX(11,20)
+  Id(3)
+  CX(12,21)
+  Id(4)
+  CX(13,22)
+  Id(5)
+  CX(14,23)
+  Id(6)
+  CX(15,24)
+  Id(7)
+  CX(16,25)
+  Id(8)
+  CX(17,26)
+  Id(9)
+  CX(18,27)
+
+
+// Implements Steane error-correction on the 3x9 Bacon-Shor code
+def ErrorCorrection (in=out=(1,2,...,27)):
+  LogicalZero(in=(), out=(28,29,...,54))
+  LogicalPlus(in=(), out=(55,56,...,81))
+
+  CX(1-27,55-81)
+ 
+  CX(28-54,1-27)
+  MeasZ(55-81)
+
+  Id(1-27)
+  MeasX(28-54)
+
+
+// The circuit for logical CCZ
+def FaultTolerantCCZ(in=out=(1,2,...,81)):
+
+  ErrorCorrection(in=out=(1,2,...,27))
+  ErrorCorrection(in=out=(28,29,...,54))
+  ErrorCorrection(in=out=(55,56,...,81))
+
+  CCZ(1-27,28-54,55-81)
+  
+  ErrorCorrection(in=out=(1,2,...,27))
+  ErrorCorrection(in=out=(28,29,...,54))
+  ErrorCorrection(in=out=(55,56,...,81))
+

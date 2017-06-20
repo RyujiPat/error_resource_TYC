@@ -1,0 +1,215 @@
+// Bacon-Shor 3x3 CCZ gate
+
+// Definitions
+// P0(q) -- preparing qubit q in |0>
+// Pp(q) -- preparing qubit q in |+>
+// Id(q) -- identity gate on qubit q
+// H(q)  -- Hadamard on qubit q
+// S(q)  -- Phase gate on qubit q
+// K(q)  -- S.H gate (H followed by S) on qubit q
+// Sinv(q) -- inverse S gate on qubit q
+// Kinv(q) -- inverse K gate on qubit q
+// CX(p,q) -- CNOT from qubit p to q
+// CZ(p,q) -- controlled-Z between qubits p and q
+// CCZ(p,q,r) -- controlled-controlled-Z between qubits p, q, and r
+// MeasZ(q) -- measures qubit q in the Z-basis
+// MeasX(q) -- measures qubit q in the X-basis
+
+// Circuits are broken into timesteps by newlines - a qubit should only be
+//  involved in at most 1 gate per timestep
+// Circuits are organized into subcircuits by "def". Subcircuits take sets of
+//  input and output qubits as arguments. Input qubits are never prepared
+//  within the subcircuit, and output qubits are never measured.
+
+
+// Fault-tolerantly prepares a logical |+> state in the 3x3 Bacon-Shor code
+def LogicalPlus(in=(), out=(1,2,3,4,5,6,7,8,9)):
+
+  P0(1)
+  Pp(2)
+  P0(4)
+  Pp(5)
+  P0(7)
+  Pp(8)
+
+  P0(3)
+  P0(6)
+  P0(9)
+  CX(2,1)
+  CX(5,4)
+  CX(8,7)
+
+  Id(1)
+  CX(2,3)
+  Id(4)
+  CX(5,6)
+  Id(7)
+  CX(8,9)
+
+
+// Fault-tolerantly prepares a logical |0> state in the 3x3 Bacon-Shor code
+def LogicalZero(in=(), out=(1,2,3,4,5,6,7,8,9)):
+
+  Pp(1)
+  Pp(2)
+  Pp(3)
+  P0(4)
+  P0(5)
+  P0(6)
+
+  Pp(7)
+  Pp(8)
+  Pp(9)
+  CX(1,4)
+  CX(2,5)
+  CX(3,6)
+
+  Id(1)
+  CX(7,4)
+  Id(2)
+  CX(8,5)
+  Id(3)
+  CX(9,6)
+
+
+// Implements Steane error-correction on the 3x3 Bacon-Shor code, ending in Z-gauge
+def ErrorCorrectionXtoZ(in=out=(1,2,3,4,5,6,7,8,9)):
+
+  LogicalZero(in=(), out=(10,11,12,13,14,15,16,17,18))
+  LogicalPlus(in=(), out=(19,20,21,22,23,24,25,26,27))
+
+  CX(10,1)
+  CX(11,2)
+  CX(12,3)
+  CX(13,4)
+  CX(14,5)
+  CX(15,6)
+  CX(16,7)
+  CX(17,8)
+  CX(18,9)
+
+  CX(1,19)
+  CX(2,20)
+  CX(3,21)
+  CX(4,22)
+  CX(5,23)
+  CX(6,24)
+  CX(7,25)
+  CX(8,26)
+  CX(9,27)
+  MeasX(10)
+  MeasX(11)
+  MeasX(12)
+  MeasX(13)
+  MeasX(14)
+  MeasX(15)
+  MeasX(16)
+  MeasX(17)
+  MeasX(18)
+
+  Id(1)
+  Id(2)
+  Id(3)
+  Id(4)
+  Id(5)
+  Id(6)
+  Id(7)
+  Id(8)
+  Id(9)
+  MeasZ(19)
+  MeasZ(20)
+  MeasZ(21)
+  MeasZ(22)
+  MeasZ(23)
+  MeasZ(24)
+  MeasZ(25)
+  MeasZ(26)
+  MeasZ(27)
+
+
+// Implements Steane error-correction on the 3x3 Bacon-Shor code, ending in X-gauge
+def ErrorCorrectionZtoX(in=out=(1,2,3,4,5,6,7,8,9)):
+
+  LogicalZero(in=(), out=(10,11,12,13,14,15,16,17,18))
+  LogicalPlus(in=(), out=(19,20,21,22,23,24,25,26,27))
+
+  CX(1,19)
+  CX(2,20)
+  CX(3,21)
+  CX(4,22)
+  CX(5,23)
+  CX(6,24)
+  CX(7,25)
+  CX(8,26)
+  CX(9,27)
+
+  CX(10,1)
+  CX(11,2)
+  CX(12,3)
+  CX(13,4)
+  CX(14,5)
+  CX(15,6)
+  CX(16,7)
+  CX(17,8)
+  CX(18,9)
+  MeasZ(19)
+  MeasZ(20)
+  MeasZ(21)
+  MeasZ(22)
+  MeasZ(23)
+  MeasZ(24)
+  MeasZ(25)
+  MeasZ(26)
+  MeasZ(27)
+
+  MeasX(10)
+  MeasX(11)
+  MeasX(12)
+  MeasX(13)
+  MeasX(14)
+  MeasX(15)
+  MeasX(16)
+  MeasX(17)
+  MeasX(18)
+
+
+// The circuit for logical CCZ
+def FaultTolerantCCZ(in=out=(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27)):
+
+  ErrorCorrectionXtoZ(in=out=(1,2,3,4,5,6,7,8,9))
+  ErrorCorrectionXtoZ(in=out=(10,11,12,13,14,15,16,17,18))
+  ErrorCorrectionXtoZ(in=out=(19,20,21,22,23,24,25,26,27))
+
+  CCZ(1,10,19)
+  CCZ(2,14,26)
+  CCZ(3,18,24)
+  CCZ(4,13,22)
+  CCZ(5,17,20)
+  CCZ(6,12,27)
+  CCZ(7,16,25)
+  CCZ(8,11,23)
+  CCZ(9,15,21)
+
+  CCZ(1,10,22)
+  CCZ(2,14,20)
+  CCZ(3,18,27)
+  CCZ(4,13,25)
+  CCZ(5,17,23)
+  CCZ(6,12,21)
+  CCZ(7,16,19)
+  CCZ(8,11,26)
+  CCZ(9,15,24)
+
+  CCZ(1,16,19)
+  CCZ(2,11,26)
+  CCZ(3,15,24)
+  CCZ(4,10,22)
+  CCZ(5,14,20)
+  CCZ(6,18,27)
+  CCZ(7,13,25)
+  CCZ(8,17,23)
+  CCZ(9,12,21)
+
+  ErrorCorrectionZtoX(in=out=(1,2,3,4,5,6,7,8,9))
+  ErrorCorrectionZtoX(in=out=(10,11,12,13,14,15,16,17,18))
+  ErrorCorrectionZtoX(in=out=(19,20,21,22,23,24,25,26,27))
